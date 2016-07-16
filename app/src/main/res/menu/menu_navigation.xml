@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+        <item android:title="主题" android:icon="@drawable/ic_dashboard_grey" android:id="@+id/theme" android:checked="true"/>
+        <item android:title="节点" android:icon="@drawable/ic_view_agenda_grey" android:id="@+id/node"/>
+        <item android:title="其他" android:id="@+id/other">
+            <menu>
+                <item android:title="关于" android:icon="@drawable/ic_info_grey" android:id="@+id/about"/>
+            </menu>
+        </item>
+</menu>

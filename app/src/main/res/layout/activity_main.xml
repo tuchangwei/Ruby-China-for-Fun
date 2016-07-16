@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.DrawerLayout
-    android:layout_width="match_parent"
+<android.support.v4.widget.DrawerLayout android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout"
     xmlns:android="http://schemas.android.com/apk/res/android">
         <LinearLayout
@@ -19,5 +19,9 @@
             android:layout_height="match_parent"
             android:id="@+id/navigation_view"
             android:layout_gravity="left"
-            android:background="@color/colorPrimary"/>
+            android:background="#FFF"
+            app:itemTextColor="@color/drawer_item_color"
+            app:itemIconTint="@color/drawer_item_color"
+            app:menu="@menu/menu_navigation"
+            app:headerLayout="@layout/nav_header"/>
     </android.support.v4.widget.DrawerLayout>

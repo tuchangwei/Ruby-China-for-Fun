@@ -10,7 +10,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_centerVertical="true"
-        android:src="@mipmap/ic_launcher"
+        android:src="@drawable/avatar_default"
         android:layout_marginStart="20dp"
         android:id="@+id/iv_avatar"
         />

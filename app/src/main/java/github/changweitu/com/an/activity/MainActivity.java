@@ -11,6 +11,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
@@ -32,10 +33,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import github.changweitu.com.an.AnApplication;
 import github.changweitu.com.an.R;
-import github.changweitu.com.an.fragment.MainFragment;
+import github.changweitu.com.an.fragment.TopicsFragment;
 import github.changweitu.com.an.model.NetworkEvent;
+import github.changweitu.com.an.util.NetworkStatusUtil;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     @BindView(R.id.toolbar)
     Toolbar toolbar;
 
@@ -46,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
     NavigationView navigationView;
 
     private ActionBarDrawerToggle drawerToggle;
-    private BroadcastReceiver netBroadcaseReceiver;
     private MenuItem selectedMenuItem;
 
     public static final int REQUEST_CODE = 1;
@@ -74,26 +75,9 @@ public class MainActivity extends AppCompatActivity {
         };
         drawerLayout.addDrawerListener(drawerToggle);
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.main_container, new MainFragment());
-        transaction.commit();
+        replace(R.id.main_container, new TopicsFragment());
 
-        netBroadcaseReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-               if (intent.getAction() == ConnectivityManager.CONNECTIVITY_ACTION) {
-                   ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-                   NetworkInfo activeNetworkInfo = cm.getActiveNetworkInfo();
-                   if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
-                       EventBus.getDefault().post(new NetworkEvent(NetworkEvent.AVALIABLE));
-                   } else {
-                       EventBus.getDefault().post(new NetworkEvent(NetworkEvent.UNAVALIABLE));
-                   }
-               }
-            }
-        };
-        registerReceiver(netBroadcaseReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        NetworkStatusUtil.getInstance(this).startDetectNetworkStatus();
         selectedMenuItem = navigationView.getMenu().findItem(R.id.theme);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -102,13 +86,13 @@ public class MainActivity extends AppCompatActivity {
                     item.setChecked(true);
                     selectedMenuItem.setChecked(false);
                     selectedMenuItem = item;
-
                 }
                 drawerLayout.closeDrawers();
                 return true;
             }
         });
     }
+
 
     @Override
     protected void onStart() {
@@ -126,11 +110,11 @@ public class MainActivity extends AppCompatActivity {
     public void onEvent(NetworkEvent event) {
         if (event.getType()==NetworkEvent.UNAVALIABLE) {
             MaterialDialog dialog = new MaterialDialog.Builder(this)
-                    .backgroundColor(getResources().getColor(R.color.colorPrimary))
+                    .backgroundColor(Color.WHITE)
                     .title("没有连接网络")
                     .content("是否开启网络连接?")
-                    .positiveText("好的")
-                    .negativeText("不用")
+                    .positiveText("是")
+                    .negativeText("否")
                     .onPositive(new MaterialDialog.SingleButtonCallback() {
                         @Override
                         public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
@@ -158,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(netBroadcaseReceiver);
+        NetworkStatusUtil.getInstance(this).stopDetectNetworkStatus();
     }
 
     public void onHeaderViewPressed(View view) {

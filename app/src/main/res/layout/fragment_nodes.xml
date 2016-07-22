@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="github.changweitu.com.an.fragment.MainFragment">
+    tools:context="github.changweitu.com.an.fragment.NodesFragment">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView

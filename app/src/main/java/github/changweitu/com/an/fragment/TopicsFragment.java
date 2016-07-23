@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import github.changweitu.com.an.R;
@@ -22,9 +24,10 @@ import github.changweitu.com.an.view.SlidingTabLayout;
 public class TopicsFragment extends Fragment {
     @BindView(R.id.view_pager)
     public ViewPager mViewPager;
-
     @BindView(R.id.sliding_tab)
     public SlidingTabLayout mSlidingTabLayout;
+
+    private static String[] mPageNames = {"精华帖", "无人问津", "最后回复", "最新创建"};
     public TopicsFragment() {
         // Required empty public constructor
     }
@@ -41,6 +44,8 @@ public class TopicsFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         mViewPager.setAdapter(new ViewPagerAdapter(getChildFragmentManager()));
+        mSlidingTabLayout.setDistributeEvenly(true);
+        mSlidingTabLayout.setDividerColors(0);
         mSlidingTabLayout.setViewPager(mViewPager);
         super.onViewCreated(view, savedInstanceState);
     }
@@ -52,12 +57,18 @@ public class TopicsFragment extends Fragment {
 
         @Override
         public Fragment getItem(int position) {
-            return null;
+
+            return new TopicListFragment();
         }
 
         @Override
         public int getCount() {
-            return 0;
+            return mPageNames.length;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mPageNames[position];
         }
     }
 }

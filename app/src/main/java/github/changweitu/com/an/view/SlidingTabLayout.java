@@ -26,8 +26,12 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import github.changweitu.com.an.R;
 
 /**
  * To be used with ViewPager to provide a tab indicator component which give constant feedback as to
@@ -69,6 +73,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
     private static final int TAB_VIEW_PADDING_DIPS = 16;
     private static final int TAB_VIEW_TEXT_SIZE_SP = 12;
 
+    private boolean mDistributeEvenly;
     private int mTitleOffset;
 
     private int mTabViewLayoutId;
@@ -128,6 +133,9 @@ public class SlidingTabLayout extends HorizontalScrollView {
         mTabStrip.setDividerColors(colors);
     }
 
+    public void setDistributeEvenly(boolean distributeEvenly) {
+        mDistributeEvenly = distributeEvenly;
+    }
     /**
      * Set the {@link ViewPager.OnPageChangeListener}. When using {@link SlidingTabLayout} you are
      * required to set any {@link ViewPager.OnPageChangeListener} through this method. This is so
@@ -173,7 +181,8 @@ public class SlidingTabLayout extends HorizontalScrollView {
         textView.setGravity(Gravity.CENTER);
         textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, TAB_VIEW_TEXT_SIZE_SP);
         textView.setTypeface(Typeface.DEFAULT_BOLD);
-
+        textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             // If we're running on Honeycomb or newer, then we can use the Theme's
             // selectableItemBackground to ensure that the View has a pressed state
@@ -190,7 +199,6 @@ public class SlidingTabLayout extends HorizontalScrollView {
 
         int padding = (int) (TAB_VIEW_PADDING_DIPS * getResources().getDisplayMetrics().density);
         textView.setPadding(padding, padding, padding, padding);
-
         return textView;
     }
 
@@ -216,8 +224,21 @@ public class SlidingTabLayout extends HorizontalScrollView {
             if (tabTitleView == null && TextView.class.isInstance(tabView)) {
                 tabTitleView = (TextView) tabView;
             }
-
+            if (mDistributeEvenly) {
+                LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) tabView.getLayoutParams();
+                layoutParams.width = 0;
+                layoutParams.weight = 1;
+            }
             tabTitleView.setText(adapter.getPageTitle(i));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                tabTitleView.setTextColor(getResources().getColorStateList(R.color.sliding_tab_text_color, null));
+            } else {
+                tabTitleView.setTextColor(getResources().getColorStateList(R.color.sliding_tab_text_color));
+            }
+            tabTitleView.setTextSize(14);
+            if (i == mViewPager.getCurrentItem()) {
+                tabTitleView.setSelected(true);
+            }
             tabView.setOnClickListener(tabClickListener);
 
             mTabStrip.addView(tabView);
@@ -291,7 +312,9 @@ public class SlidingTabLayout extends HorizontalScrollView {
                 mTabStrip.onViewPagerPageChanged(position, 0f);
                 scrollToTab(position, 0);
             }
-
+            for (int i=0;i<mTabStrip.getChildCount();i++) {
+                mTabStrip.getChildAt(i).setSelected(i==position);
+            }
             if (mViewPagerPageChangeListener != null) {
                 mViewPagerPageChangeListener.onPageSelected(position);
             }

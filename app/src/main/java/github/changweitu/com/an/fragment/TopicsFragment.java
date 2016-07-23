@@ -45,8 +45,18 @@ public class TopicsFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         mViewPager.setAdapter(new ViewPagerAdapter(getChildFragmentManager()));
         mSlidingTabLayout.setDistributeEvenly(true);
-        mSlidingTabLayout.setDividerColors(0);
         mSlidingTabLayout.setViewPager(mViewPager);
+        mSlidingTabLayout.setCustomTabColorizer(new SlidingTabLayout.TabColorizer() {
+            @Override
+            public int getIndicatorColor(int position) {
+                return getResources().getColor(R.color.tabsScrollColor);
+            }
+
+            @Override
+            public int getDividerColor(int position) {
+                return 0;
+            }
+        });
         super.onViewCreated(view, savedInstanceState);
     }
 

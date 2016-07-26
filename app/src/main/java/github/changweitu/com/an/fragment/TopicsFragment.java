@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import github.changweitu.com.an.R;
+import github.changweitu.com.an.model.Topic;
 import github.changweitu.com.an.view.SlidingTabLayout;
 
 /**
@@ -27,7 +28,7 @@ public class TopicsFragment extends Fragment {
     @BindView(R.id.sliding_tab)
     public SlidingTabLayout mSlidingTabLayout;
 
-    private static String[] mPageNames = {"精华帖", "无人问津", "最后回复", "最新创建"};
+    private static String[] mPageNames = {Topic.POST_TOP, Topic.POST_NO_REPLY, Topic.POST_LAST_REPLY, Topic.POST_NEW};
     public TopicsFragment() {
         // Required empty public constructor
     }
@@ -67,8 +68,11 @@ public class TopicsFragment extends Fragment {
 
         @Override
         public Fragment getItem(int position) {
-
-            return new TopicListFragment();
+            Fragment fragment = new TopicListFragment();
+            Bundle bundle = new Bundle();
+            bundle.putString("type", Topic.types.get(mPageNames[position]));
+            fragment.setArguments(bundle);
+            return fragment;
         }
 
         @Override

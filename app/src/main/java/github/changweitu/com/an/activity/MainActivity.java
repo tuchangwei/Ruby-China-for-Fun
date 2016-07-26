@@ -146,7 +146,6 @@ public class MainActivity extends BaseActivity {
     }
 
     public void onHeaderViewPressed(View view) {
-        if (AnApplication.shareApplication.user.isLoggedIn()) return;
-        startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_CODE);
+
     }
 }

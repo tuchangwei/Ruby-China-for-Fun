@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_toRightOf="@+id/iv_avatar"
-            android:textSize="15sp"
+            android:textSize="13sp"
             android:text="我是副标题,副标题"
             android:layout_below="@+id/tv_title"
             android:id="@+id/tv_subTitle" />

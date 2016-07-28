@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.orhanobut.logger.Logger;
 import com.squareup.picasso.Picasso;
@@ -36,6 +37,7 @@ import butterknife.ButterKnife;
 import github.changweitu.com.an.Constant;
 import github.changweitu.com.an.R;
 import github.changweitu.com.an.model.Topic;
+import github.changweitu.com.an.util.DateUtil;
 import github.changweitu.com.an.view.CircleTransform;
 import github.changweitu.com.an.view.RoundedTransformation;
 import okhttp3.Call;
@@ -64,6 +66,9 @@ public class TopicListFragment extends Fragment {
 
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    private int page;
+    private int countPerPage = 20;
+    private boolean isLoadingMore;
 
     public TopicListFragment() {
         // Required empty public constructor
@@ -97,6 +102,7 @@ public class TopicListFragment extends Fragment {
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                page = 0;
                 requestTopics();
             }
         });
@@ -104,7 +110,22 @@ public class TopicListFragment extends Fragment {
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
 
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                int lastVisibileItem  = ((LinearLayoutManager)recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+                int totalItemsCount = recyclerView.getAdapter().getItemCount();
+                if (lastVisibileItem >= totalItemsCount - 2 && !isLoadingMore && dy > 0) {
+                    isLoadingMore = true;
+                    loadMore();
+                }
+            }
+        });
         if (!firstLoading) {
             loadingView.start();
             requestTopics();
@@ -115,19 +136,21 @@ public class TopicListFragment extends Fragment {
     public void requestTopics() {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url(Constant.BaseURL + Constant.TopicEndPoint + "?type=" + type).build();
+                .url(Constant.BaseURL + Constant.TopicEndPoint + "?type=" + type + "&offset=" + page*countPerPage).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-
                 stopLoadingOnMainThread(false);
             }
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 try {
+                    if (page==0) {
+                        mTopics.clear();
+                    }
                     JSONObject topicsJson = new JSONObject(response.body().string());
                     JSONArray topics = topicsJson.getJSONArray("topics");
-                    Gson gson = new Gson();
+                    Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").create();
                     Type topicListType = new TypeToken<Collection<Topic>>(){}.getType();
                     List<Topic> topicList = gson.fromJson(String.valueOf(topics), topicListType);
                     mTopics.addAll(topicList);
@@ -139,6 +162,10 @@ public class TopicListFragment extends Fragment {
         });
     }
 
+    public void loadMore() {
+        page++;
+        requestTopics();
+    }
     private void stopLoadingOnMainThread(final boolean successed) {
         loadingView.post(new Runnable() {
             @Override
@@ -146,12 +173,12 @@ public class TopicListFragment extends Fragment {
                 loadingView.stop();
                 mSwipeRefreshLayout.setRefreshing(false);
                 mAdapter.notifyDataSetChanged();
+                isLoadingMore = false;
                 if (!successed) {
                     Toast.makeText(getContext(), "请求失败",Toast.LENGTH_LONG).show();
                 }
             }
         });
-
     }
 
     public class TopticListAdapter extends RecyclerView.Adapter<TopticListAdapter.ViewHolder> {
@@ -167,7 +194,7 @@ public class TopicListFragment extends Fragment {
         public void onBindViewHolder(ViewHolder holder, int position) {
             Topic topic = mTopics.get(position);
             holder.tv_title.setText(topic.getTitle());
-            holder.tv_subTitle.setText(topic.getUser().getLogin());
+            holder.tv_subTitle.setText(topic.getUser().getLogin() + "       " + DateUtil.before(topic.getCreated_at()));
             int density = (int) getResources().getDisplayMetrics().density;
             Picasso.with(getContext())
                     .load(topic.getUser().getAvatar_url())

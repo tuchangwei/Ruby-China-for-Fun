@@ -22,7 +22,7 @@ public class Topic {
       types.put(POST_NEW, "recent");
    }
 
-   private int id;
+   private long id;
    private String title;
    private Date created_at;
    private Date updated_at;
@@ -45,11 +45,11 @@ public class Topic {
       this.user = user;
    }
 
-   public int getId() {
+   public long getId() {
       return id;
    }
 
-   public void setId(int id) {
+   public void setId(long id) {
       this.id = id;
    }
 

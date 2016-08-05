@@ -1,6 +1,7 @@
 package github.changweitu.com.an.fragment;
 
 
+import android.app.DownloadManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -22,6 +23,8 @@ import com.orhanobut.logger.Logger;
 import com.squareup.picasso.Picasso;
 import com.victor.loading.rotate.RotateLoading;
 
+import org.greenrobot.greendao.query.Query;
+import org.greenrobot.greendao.query.QueryBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,9 +37,16 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import github.changweitu.com.an.AnApplication;
 import github.changweitu.com.an.Constant;
 import github.changweitu.com.an.R;
+import github.changweitu.com.an.model.DaoSession;
 import github.changweitu.com.an.model.Topic;
+import github.changweitu.com.an.model.TopicEntity;
+import github.changweitu.com.an.model.TopicEntityDao;
+import github.changweitu.com.an.model.User;
+import github.changweitu.com.an.model.UserEntity;
+import github.changweitu.com.an.model.UserEntityDao;
 import github.changweitu.com.an.util.DateUtil;
 import github.changweitu.com.an.view.CircleTransform;
 import github.changweitu.com.an.view.RoundedTransformation;
@@ -45,6 +55,7 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -62,7 +73,7 @@ public class TopicListFragment extends Fragment {
 
     private boolean firstLoading;
     private String type;
-    private ArrayList<Topic> mTopics;
+    private ArrayList<TopicEntity> mTopics;
 
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -70,6 +81,8 @@ public class TopicListFragment extends Fragment {
     private int countPerPage = 20;
     private boolean isLoadingMore;
 
+    private TopicEntityDao mTopicDao;
+    private UserEntityDao mUserDao;
     public TopicListFragment() {
         // Required empty public constructor
     }
@@ -79,6 +92,9 @@ public class TopicListFragment extends Fragment {
         super.onAttach(context);
         type = getArguments().getString("type");
         mTopics = new ArrayList<>();
+        DaoSession daoSession = ((AnApplication)getActivity().getApplication()).getDaoSession();
+        mTopicDao = daoSession.getTopicEntityDao();
+        mUserDao = daoSession.getUserEntityDao();
     }
 
     @Override
@@ -153,7 +169,20 @@ public class TopicListFragment extends Fragment {
                     Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").create();
                     Type topicListType = new TypeToken<Collection<Topic>>(){}.getType();
                     List<Topic> topicList = gson.fromJson(String.valueOf(topics), topicListType);
-                    mTopics.addAll(topicList);
+
+                    for (Topic topic : topicList) {
+                        UserEntity userEntity = new UserEntity();
+
+                        UserEntity.addOrUpdateUserInDB(userEntity, topic.getUser());
+                        mUserDao.insertOrReplace(userEntity);
+
+                        TopicEntity topicEntity = new TopicEntity();
+                        TopicEntity.addOrUpdateTopicInDB(topicEntity, topic, page);
+                        topicEntity.setUser(userEntity);
+                        mTopicDao.insertOrReplace(topicEntity);
+
+                        Logger.d(userEntity.getTopics().size());
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -161,7 +190,6 @@ public class TopicListFragment extends Fragment {
             }
         });
     }
-
     public void loadMore() {
         page++;
         requestTopics();
@@ -172,10 +200,17 @@ public class TopicListFragment extends Fragment {
             public void run() {
                 loadingView.stop();
                 mSwipeRefreshLayout.setRefreshing(false);
-                mAdapter.notifyDataSetChanged();
+                Query query = mTopicDao.queryBuilder()
+                        .where(TopicEntityDao.Properties.Page.eq(page))
+                        .build();
+                List list = query.list();
+                if (list.size()>0) {
+                    mTopics.addAll(list);
+                    mAdapter.notifyDataSetChanged();
+                }
                 isLoadingMore = false;
                 if (!successed) {
-                    Toast.makeText(getContext(), "请求失败",Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "请求失败, 数据来自于缓存",Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -192,8 +227,9 @@ public class TopicListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            Topic topic = mTopics.get(position);
+            TopicEntity topic = mTopics.get(position);
             holder.tv_title.setText(topic.getTitle());
+
             holder.tv_subTitle.setText(topic.getUser().getLogin() + "       " + DateUtil.before(topic.getCreated_at()));
             int density = (int) getResources().getDisplayMetrics().density;
             Picasso.with(getContext())

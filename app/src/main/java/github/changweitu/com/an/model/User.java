@@ -5,16 +5,16 @@ package github.changweitu.com.an.model;
  */
 
 public class User {
-    private int id;
+    private long id;
     private String login;
     private String name;
     private String avatar_url;
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
